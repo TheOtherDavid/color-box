@@ -21,6 +21,7 @@ func main() {
 	fmt.Println(color)
 
 	//Then we call WLED to set the color
+	callWledWithColor(color)
 }
 
 type Color struct {
@@ -118,4 +119,98 @@ func calculateTemperatureColor(currTemp float32, lowTemp float32, highTemp float
 		Blue:  blue,
 	}
 	return color
+}
+
+func callWledWithColor(color Color) {
+	red := color.Red
+	green := color.Green
+	blue := color.Blue
+
+	wledBody := `
+{
+    "on": true,
+    "bri": 240,
+    "transition": 7,
+    "ps": -1,
+    "pl": -1,
+    "ccnf": {
+        "min": 1,
+        "max": 5,
+        "time": 12
+    },
+    "nl": {
+        "on": false,
+        "dur": 60,
+        "fade": true,
+        "mode": 1,
+        "tbri": 0,
+        "rem": -1
+    },
+    "udpn": {
+        "send": true,
+        "recv": true
+    },
+    "lor": 0,
+    "mainseg": 0,
+    "seg": [
+        {
+            "id": 0,
+            "start": 0,
+            "stop": 600,
+            "len": 600,
+            "grp": 1,
+            "spc": 0,
+            "on": true,
+            "bri": 255,
+            "col": [
+                [
+                    %d,
+                    %d,
+                    %d
+                ],
+                [
+                    0,
+                    0,
+                    0
+                ],
+                [
+                    %d,
+                    %d,
+                    %d
+                ]
+            ],
+            "fx": 75,
+            "sx": 63,
+            "ix": 103,
+            "pal": 5,
+            "sel": false,
+            "rev": false,
+            "mi": false
+        }
+    ]
+}
+`
+
+	formattedBody := fmt.Sprintf(wledBody, red, green, blue, red, green, blue)
+	fmt.Println(formattedBody)
+	callWledWithJson(formattedBody)
+
+}
+
+func callWledWithJson(body string) {
+	jsonBody := []byte(body)
+	ipAddress := os.Getenv("WLED_IP_ADDRESS")
+
+	url := "http://" + ipAddress + "/json/state"
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(resp.StatusCode)
 }
