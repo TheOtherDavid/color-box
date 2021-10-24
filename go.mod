@@ -1,3 +1,3 @@
-module github.com/TheOtherDavid/color-box
+module github.com/TheOtherDavid/color-temp
 
 go 1.16
